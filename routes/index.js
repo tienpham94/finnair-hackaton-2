@@ -23,7 +23,7 @@ router.get('/profile', function(req, res) {
   } else {
     res.redirect("/login");
   }
-  
+
 });
 
 /* GET login page */

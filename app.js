@@ -7,22 +7,49 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var passport = require('passport')
 var InstagramStrategy = require('passport-instagram').Strategy
+var FacebookStrategy = require('passport-facebook').Strategy
+
 var session = require('express-session')
 var MongoStore = require('connect-mongo')(session)
 var User = require("./models/user");
 
-//Configure Github Strategy
-passport.use(new InstagramStrategy({
-  clientID: "bc8daff6d1df46f1a38cf0e6d523574f",
-  clientSecret:"66153aeed11a45a18e849866f0676e20",
-  callbackURL: "http://localhost:3000/auth/instagram/return"
-  },
-  function(accessToken, refreshToken, profile, done) {
-    User.findOrCreate({ instagramId: profile.id }, function (err, user) {
-      return done(err, user);
-    });
-  }
-))
+function generateOrFindUser(accessToken, refreshToken, profile, done){ console.log(profile.emails[0].value); if(profile.emails[0].value) { User.findOneAndUpdate( { email: profile.emails[0].value }, { name: profile.displayName || profile.username, email: profile.emails[0].value, photo: profile.photos[0].value }, { upsert: true }, done ); } else { var noEmailError = new Error("Your email privacy settings prevent you from signing into Bookworm."); done(noEmailError, null); } }
+// function generateOrFindUser(accessToken, refreshToken, profile, done){
+//   if(profile.emails[0]) {
+//     User.findOneAndUpdate(
+//       { email: profile.emails[0] },
+//       {
+//         name: profile.displayName || profile.username,
+//         email: profile.emails[0].value,
+//         photo: profile.photos[0].value
+//       },
+//       {
+//         upsert: true
+//       },
+//     done
+//   );
+//   } else {
+//     var noEmailError = new Error("Your email privacy settings prevent you from signing into Bookworm.");
+//     done(noEmailError, null);
+//   }
+// }
+
+// passport.use(new GitHubStrategy({
+//     clientID: process.env.GITHUB_CLIENT_ID,
+//     clientSecret: process.env.GITHUB_CLIENT_SECRET,
+//     callbackURL: 'http://localhost:3000/auth/github/return'
+//   },
+//   generateOrFindUser)
+// );
+
+passport.use(new FacebookStrategy({
+  clientID: "1439697042814402",
+  clientSecret:"e135236cab7aa5c9f4cae0cf0184e698",
+  callbackURL: "http://localhost:3000/auth/facebook/return",
+  profileFields: ['id', 'displayName', 'photos', 'email']
+},
+  generateOrFindUser)
+);
 
 //user is mongoose model in our case
 //null for the error
